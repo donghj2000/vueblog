@@ -4,7 +4,7 @@
 ### 安装依赖
 ```
 npm install 或
-npm install
+cnpm install
 ```
 
 ### 开发调试
