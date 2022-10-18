@@ -19,7 +19,7 @@
         <el-table-column label="姓名" prop="name" width="100"/>
         <el-table-column label="邮箱" prop="email" width="150"/>
         <el-table-column label="手机" prop="phone" width="120"/>
-        <el-table-column :formatter="datetimeFormatter" label="留言时间" prop="created_at" width="150" />
+        <el-table-column :formatter="datetimeFormatter" label="留言时间" prop="created_at" width="160" />
         <el-table-column :formatter="contentFormatter" label="内容" prop="content" width="150"/>
 
         <el-table-column label="操作">
