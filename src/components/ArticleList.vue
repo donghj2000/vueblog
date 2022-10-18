@@ -15,10 +15,7 @@
                         <span>查看 {{article.views}}</span>
                         <span>评论 {{article.comments}}</span>
                         <span>赞 {{article.likes}}</span>
-                        <router-link v-for="tag in article.tags_info" :key="tag.id"
-                                                    :to="`/articles?tags=${tag.id}&catalog=`">
-                                <el-tag size="mini">{{tag.name}}</el-tag>
-                        </router-link>
+                            <el-tag v-for="tag in article.tags_info" :key="tag.id" size="mini" @click="handleTag(tag.id)">{{tag.name}}</el-tag>
                         <span v-if="article.created_at" class="time">{{formatTime(article.created_at)}}</span>
                     </div>
                 </div>
@@ -29,7 +26,9 @@
 <script lang="ts">
 import { timestampToTime } from "../utils";
 import { defineComponent, PropType } from "vue";
+import { SET_ARTICLE_PARAMS, StateKey } from "../store";
 import { Article } from "../types";
+import { useStore } from "vuex";
 
 export default defineComponent({
     name: 'ArticleList',
@@ -45,9 +44,15 @@ export default defineComponent({
             return timestampToTime(value, true);
         };
         const href: string = '/article/?id='
+        
+        const store: any = useStore(StateKey);
+        const handleTag = (tagid: number) => {
+            store.commit(SET_ARTICLE_PARAMS, {catalog: undefined,tag: tagid});
+        };
         return {
             formatTime,
             href,
+            handleTag
         }
     }
 })
