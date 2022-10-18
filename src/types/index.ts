@@ -1,7 +1,7 @@
 export interface User {
     id: number,
     username: string,
-    last_login,
+    last_login:any,
     email: string,
     avatar: string | any,
     desc: string | any,
@@ -69,7 +69,7 @@ export interface ArticleParams {
     search: string | any,
     text: string | any,
     status: string |  any,
-    tags: Array<number> | any,
+    tag: number,
     catalog: number | any,
     page: number,
     page_size: number,
@@ -130,11 +130,4 @@ export interface MessageParam {
     page: number,
     page_size: number
 }
-
-
-
-
-
-
-
 
