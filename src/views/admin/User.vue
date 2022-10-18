@@ -7,8 +7,8 @@
                 </el-form-item>
                 <el-form-item label="状态">
                     <el-select v-model="state.params.is_active" placeholder="请选择">
-                        <el-option value="true" label="生效"/>
-                        <el-option value="false" label="禁用"/>
+                        <el-option value=true label="生效"/>
+                        <el-option value=false label="禁用"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item>
@@ -21,10 +21,10 @@
                       stripe>
                 <el-table-column type="selection" width="55"/>
                 <el-table-column label="ID" prop="id" width="80"/>
-                <el-table-column label="账号" prop="username" width="200"/>
-                <el-table-column label="角色" prop="is_superuser" width="200"/>
+                <el-table-column label="账号" prop="username" width="100"/>
+                <el-table-column label="角色" prop="is_superuser" width="80"/>
                 <el-table-column label="昵称" prop="nickname" width="200"/>
-                <el-table-column label="状态" prop="is_active"/>
+                <el-table-column label="状态" prop="is_active" width="80"/>
                 <el-table-column :formatter="datetimeFormatter" label="注册时间" prop="created_at"/>
                 <el-table-column label="操作">
                     <template #default="scope">
@@ -131,20 +131,28 @@ export default defineComponent({
         };
 
         const disableUser = async (index: number,row: User) => {
-            await saveUser('patch', {id: row.id, is_active: false} as User);
-            ElMessage({
-                message: "禁用成功",
-                type: "success",
-            });
+            try {
+                let ret = await saveUser('patch', {id: row.id, is_active: false} as User);
+                ElMessage({
+                    message: "禁用成功",
+                    type: "success",
+                });
+            } catch (e) {
+                console.error(e)
+            }
             await handleSearch();
         };
 
         const enableUser = async (index: number, row: User) => {
-            await saveUser('patch', {id: row.id, is_active: true} as User);
-            ElMessage({
-                message: "启用成功！",
-                type: "success",
-            });
+            try {
+                let ret = await saveUser('patch', {id: row.id, is_active: true} as User);
+                ElMessage({
+                    message: "启用成功！",
+                    type: "success",
+                });
+            } catch (e) {
+                console.error(e)
+            }
             await handleSearch();
         };
         
