@@ -48,8 +48,9 @@ export default defineComponent({
 
     watch: {
         "$store.state.articleParams": {
+            
             handler(val: any, oldVal: any) {
-                this.state.params.tags = val.tags;
+                this.state.params.tag = val.tag;
                 this.state.params.catalog = val.catalog;
                 this.state.articleList = [];
                 this.state.params.page = 1;
@@ -65,6 +66,8 @@ export default defineComponent({
             articleList: [] as Array<Article>,
             total: 0,
             params: {
+                tag: undefined,
+                catalog: undefined,
                 status: "Published",
                 page: 1,
                 page_size:10,
