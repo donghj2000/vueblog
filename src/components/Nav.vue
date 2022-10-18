@@ -51,6 +51,13 @@
 
                 <el-col v-if="isLogin" :span="5">
                     <div class="nav-right">
+			<img
+			v-if="userInfo.avatar"
+			alt="我的头像"
+			class="user-img"
+			:src="userInfo.avatar"                                
+			/>
+		    
                         <el-dropdown>
                             <span class="el-dropdown-link">
                                 {{ userInfo.username ? userInfo.username : userInfo.nickname
@@ -202,6 +209,7 @@ export default defineComponent({
                 //二，jwt退出
                 let is_superuser = store.state.user.is_superuser;
                 delCookie("userInfo");
+		delCookie("JwtCookie");
                 store.commit(CLEAR_USER);
                 state.loginVisible = false;
                 if (is_superuser) {
@@ -276,7 +284,7 @@ export default defineComponent({
 
         .user-img {
             position: absolute;
-            top: -15px;
+            top: 0px;
             right: 0;
             width: 50px;
             border-radius: 50%;
