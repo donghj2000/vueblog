@@ -3,67 +3,13 @@
         <div class="top-title">
             <span>{{ numbers }}条评论</span>
         </div>
-        <div v-for="(item, i) in state.comments" :key="item.id" class="item">
-            <div class="item-header">
-                <div class="author">
-                    <div class="avatar">
-                        <img 
-                            v-if="!item.user_info.avatar"
-                            alt="默认图片" 
-                            src="../assets/avatar.png" 
-                        />
-                        <img v-else :src="item.user_info.avatar" alt="" />
-                    </div>
-                </div>
-                <div class="info">
-                    <div class="name">
-                        {{item.user_info.name}}
-                        {{item.user_info.role==="Admin"?"(作者)":""}}
-                    </div>
-                    <div class="time">{{formatTime(item.created_at)}}</div>
-                </div>
-            </div>
-            <div class="comment-detail">{{item.content}}</div>
-            <div class="item-comment">
-                <div
-                    class="message"
-                    @click="showCommentModal(item.id, item.user_info.id)"
-                >
-                    <el-button size="small">回复</el-button>    
-                </div>
-            </div>
-            <div v-for="e in item.comment_replies" :key="e.id" class="item-other">
-                <div class="item-header">
-                    <div class="author">
-                        <div class="avatar">
-                            <img 
-                                v-if="!e.user_info.avatar"
-                                alt="默认图片" 
-                                src="../assets/avatar.png" 
-                            />
-                            <img v-else :src="e.user_info.avatar" alt="" />
-                        </div>
-                    </div>
-                    <div class="info">
-                        <div class="name">
-                            {{e.user_info.name}}
-                            {{e.user_info.role==="Admin"?"(作者)":""}}
-                        </div>
-                        <div class="time">
-                            {{formatTime(e.created_at)}}
-                        </div>
-                    </div>
-                </div>
-                <div class="comment-detail">
-                    {{e.content}}
-                </div>
-            </div>
-        </div>
+
+        <ReplyTree v-if="state.comments.length!=0" :replies="state.comments" level=0 class="item-other"/>
         <Comment 
             :article-id="state.articleId"
             :forArticle="false"
-            :reply="state.comment_id"
-            :show-dialog="state.visible"
+            :reply="commentId"
+            :show-dialog="commentVisible"
             @cancel="handleCancel"
             @ok="handleOk"
         />
@@ -82,12 +28,22 @@ import { timestampToTime } from "../utils";
 import { CommentInfo } from "../types";
 import { getArticleComments } from "../api/service";
 import { useStore } from "vuex";
-import { StateKey } from "../store";
+import { SET_COMMENT_VISIBLE, StateKey } from "../store";
+import ReplyTree from "./ReplyTree.vue";
 
 export default defineComponent ({
     name: "CommentList",
     components: {
         Comment: defineAsyncComponent(()=>import("./Comment.vue")),
+        ReplyTree
+    },
+    computed: {
+        commentVisible(): boolean {
+            return this.store.state.commentVisible;
+        },
+        commentId(): boolean {
+            return this.store.state.commentId;
+        },
     },
     props: {
         numbers: {
@@ -113,7 +69,7 @@ export default defineComponent ({
             return timestampToTime(value, true);
         };
         const handleCancel = (): void => {
-            state.visible = false;
+            store.commit(SET_COMMENT_VISIBLE, {commentId: 0, commentVisible: false});
         };
 
         const getArticleCommentList = async () => {
@@ -129,47 +85,18 @@ export default defineComponent ({
         };
 
         const handleOk = async () : Promise<void> => {
-            state.visible = false;
+            store.commit(SET_COMMENT_VISIBLE, {commentId:0, commentVisible: false});
             await getArticleCommentList();
-        };
-
-        //添加评论
-        const showCommentModal = (
-                commentId: number,
-                user: number,
-                secondUser?:number
-            ): boolean | void => {
-                let user_id: number;
-                if (store.state.user.id > 0) {
-                    user_id = store.state.user.id;
-                } else {
-                    ElMessage({
-                        message: "登录才能评论，请先登录！",
-                        type: "warning",
-                    });
-                    return;
-                }
-                // 添加三级评论
-                if (secondUser) {
-                    state.comment_id = commentId;
-                } else {
-                    //添加二级评论
-                    state.comment_id = commentId;
-                }
-                state.visible = true;
         };
 
         watch(props, (val, oldVal) => {
             getArticleCommentList();
         });
 
-        onMounted(()=>{
-            getArticleCommentList();
-        });
 
         return {
+            store,
             state,
-            showCommentModal,
             handleOk, 
             handleCancel,
             formatTime,
@@ -268,11 +195,15 @@ export default defineComponent ({
     }
   }
 }
-
+.item-recurse {
+  position: relative;
+  left: 10px;
+  border-left: 2px solid #f0f0f0;
+}
 .item-other {
   margin: 20px;
   padding: 10px;
-  border-left: 2px solid #f0f0f0;
+  //border-left: 2px solid #f0f0f0;
 
   .item-header {
     position: relative;
