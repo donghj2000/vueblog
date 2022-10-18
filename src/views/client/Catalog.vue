@@ -53,7 +53,7 @@ export default defineComponent({
         let height = window.innerHeight || document.documentElement.clientHeight;
         height = height - 200;
         const handleNodeClick = (catalog: Catalog) => {
-            store.commit(SET_ARTICLE_PARAMS, {catalog: catalog.id});
+            store.commit(SET_ARTICLE_PARAMS, {catalog: catalog.id, tag: undefined});
         };
         return {
             state,
