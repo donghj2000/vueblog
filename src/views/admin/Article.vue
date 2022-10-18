@@ -6,7 +6,7 @@
                     <el-input ref="title" v-model="state.params.search" placeholder="文章标题"/>
                 </el-form-item>
                 <el-form-item label="状态">
-                    <el-select v-model="state.params.status" placeholder="状态">
+                    <el-select v-model="state.params.status" clearable placeholder="状态">
                         <el-option label="已发布" value="Published" />
                         <el-option label="草稿" value="Draft" />
                     </el-select>
@@ -26,14 +26,15 @@
         </div>
         <div>
             <el-table ref="articleTable" :data="state.articleList" :header-cell-style="{background:'#eef1f6', color:'#606266'}" stripe
-                style="width:100%">
-                <el-table-column type="selection" width="55" />
-                <el-table-column label="ID" prop="id" width="80" />
+                style="width:120%">
+                <el-table-column type="selection" width="35" />
+                <el-table-column label="ID" prop="id" width="50" />
                 <el-table-column label="标题" prop="title" width="200"/>
-                <el-table-column :formatter="(row, column, value)=>statusDict[value]" label="状态" prop="status" width="80" />
-                <el-table-column label="分类" prop="catalog_info.name" />
+                <el-table-column :formatter="(row, column, value)=>statusDict[value]" label="状态" prop="status" width="70" />
+                <el-table-column label="分类" prop="catalog_info.name" width="60"/>
+                <el-table-column :formatter="datetimeFormatter" label="创建世间" prop="created_at" width="160" />
                 <el-table-column :formatter="datetimeFormatter" label="修改时间" prop="modified_at" width="160" />
-                <el-table-column fixed="right" label="操作" width="200">
+                <el-table-column fixed="right" label="操作" width="240">
                     <template #default="scope">
                         <el-popconfirm cancelButtonText='取消' confirmButtonText='删除' icon="el-icon-info" iconColor="red"
                         title="确定删除该文章吗？" @confirm="deleteArticle(scope.$index,scope.row)">
