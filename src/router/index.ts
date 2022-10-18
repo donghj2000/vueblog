@@ -11,7 +11,7 @@ const routes: Array<RouteRecordRaw> = [
         meta: {}
     },
     {
-        path: "/search/:text",
+        path: "/search/:text/:count",
         name: "Search",
         component: () =>
             import(/* webpackChunkName: "Search" */ "../views/client/Search.vue")
