@@ -39,6 +39,11 @@
                 <el-table-column label="名称" prop="name" width="200" />
                 <el-table-column 
                     :formatter="datetimeFormatter" 
+                    label="创建时间" 
+                    prop="created_at" 
+                />
+                <el-table-column 
+                    :formatter="datetimeFormatter" 
                     label="修改时间" 
                     prop="modified_at" 
                 />
