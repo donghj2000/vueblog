@@ -8,7 +8,9 @@ export interface State {
     articleParams:ArticleParams,
     navIndex: string,
     navs: Array<Nav>,
-}
+    commentVisible: boolean,
+    commentId: 0
+} 
 
 export const StateKey: InjectionKey<Store<State>> = Symbol();
 export const SET_USER = 'setUser';
@@ -16,6 +18,7 @@ export const CLEAR_USER = 'clearUser';
 export const SET_NAV_INDEX = 'setNavIndex';
 export const SET_ARTICLE_PARAMS = 'setArticleParams';
 export const SET_NAV_INDEX_BY_ROUTE = 'setNavIndexByRoute';
+export const SET_COMMENT_VISIBLE = "setCommentVisible";
 
 
 export const initDefaultUserInfo = (): User=>{
@@ -43,7 +46,7 @@ export const initDefaultArticleParams = (): ArticleParams => {
         text: undefined,
         search: undefined,
         status: 'Published',
-        tags: undefined,
+        tag: undefined,
         catalog: undefined,
         page: 1,
         page_size: 10,
@@ -83,6 +86,8 @@ export const store = createStore<State>({
                     name: '关于',
                 },
             ],
+            commentVisible: false,
+            commentId: 0
         }
     },
     mutations: {
@@ -100,6 +105,11 @@ export const store = createStore<State>({
         setArticleParams(state: object | any, params: object) {
             state.articleParams = {...state.articleParams, ...params};
         },
+        setCommentVisible(state: object|any, commentParam: object|any) {
+            for (const prop in commentParam){
+                state[prop] = commentParam[prop];
+            }
+        }
         //setNavIndexByRoute({commit, state: object|any}, route: string) {
         // setNavIndexByRoute(state: object|any, route: string) {
         //     const index = state.navs.findIndex((r: any) => r.path === route)
