@@ -68,10 +68,12 @@ export default defineComponent({
       try {
         const data: any = await getArchiveList(params)
         state.isLoading = false;
-
+        let receivedYearListCnt = data.data.results.length; //本次收到的文章分布在几个年份里
+        //如果本次接收到的第一条文章的年份和上次收到的最后一条的相同，则合并到一个列表里
         if (state.articleList.length > 0 &&
             state.articleList[state.articleList.length - 1].year ==
-            data.data.results[0].year ) {
+            data.data.results[0].year ) 
+        {
             state.articleList[state.articleList.length - 1].list = 
             [...state.articleList[state.articleList.length - 1].list, 
              ...data.data.results[0].list];
@@ -82,11 +84,12 @@ export default defineComponent({
         state.total = data.data.count;
         state.params.page++;
         
-	let received = 0;
+        let received = 0;
         state.articleList.forEach(item => {
             received += item.list.length;
         });
-        if (data.data.results.length === 0 ||
+
+        if (receivedYearListCnt === 0 ||
             state.total <= received) {
                 state.isLoadEnd = true;
                 window.onscroll = null;
