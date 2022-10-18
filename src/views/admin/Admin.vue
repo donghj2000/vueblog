@@ -1,101 +1,250 @@
 <template>
-    <div class="body">
-        <div class="menu">
-            <el-menu :default-active="state.activePath" :router="true" active-text-color="#E04040">
-                <el-menu-item index="AdminDashboard" route="/admin/dashboard">
-                    <HomeFilled style="width: 1.5em; height: 1.5em; margin-right: 8px;" />
-                    Dashboard
-                </el-menu-item>
-                
-                <el-menu-item index="ArticleManagement" route="/admin/article">
-                    <Document style="width: 1.5em; height: 1.5em; margin-right: 8px;" /> 
-                    文章
-                </el-menu-item>
-
-                <el-menu-item index="TagManagement" route="/admin/tag">
-                    <Flag style="width: 1.5em; height: 1.5em; margin-right: 8px;" /> 
-                    标签
-                </el-menu-item>
-
-                <el-menu-item index="CommentManagement" route="/admin/comment">
-                    <Comment style="width: 1.5em; height: 1.5em; margin-right: 8px;" /> 
-                    评论
-                </el-menu-item>
-
-                <el-menu-item index="UserManagement" route="/admin/user">
-                    <User style="width: 1.5em; height: 1.5em; margin-right: 8px;" /> 
-                    用户
-                </el-menu-item>
-
-                <el-menu-item index="MessageManagement" route="/admin/message">
-                    <ChatDotRound style="width: 1.5em; height: 1.5em; margin-right: 8px;" /> 
-                    留言
-                </el-menu-item>
-            </el-menu>
+    <div>
+        <div>
+            <el-form :inline="true" class="demo-form-inline">
+                <el-form-item label="标题">
+                    <el-input ref="title" v-model="state.params.search" placeholder="文章标题"/>
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select v-model="state.params.status" clearable placeholder="状态">
+                        <el-option label="已发布" value="Published" />
+                        <el-option label="草稿" value="Draft" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button :icon="searchIcon" :loading="state.isLoading" type="primary" @click="handleSearch">查询</el-button>
+                </el-form-item>
+            </el-form>
         </div>
-        <div class="view">
-            <router-view />
+        <div class="button-container">
+            <el-button :icon="plus" :loading="state.isLoading" type="primary" @click="showAddDrawer">
+        新增
+            </el-button>
+            <el-button circle :icon="expand" @click="state.showCatalogTree=true">
+                分类管理
+            </el-button>
+        </div>
+        <div>
+            <el-table ref="articleTable" :data="state.articleList" :header-cell-style="{background:'#eef1f6', color:'#606266'}" stripe
+                style="width:120%">
+                <el-table-column type="selection" width="35" />
+                <el-table-column label="ID" prop="id" width="50" />
+                <el-table-column label="标题" prop="title" width="200"/>
+                <el-table-column :formatter="(row, column, value)=>statusDict[value]" label="状态" prop="status" width="70" />
+                <el-table-column label="分类" prop="catalog_info.name" width="60"/>
+                <el-table-column :formatter="datetimeFormatter" label="创建世间" prop="created_at" width="160" />
+                <el-table-column :formatter="datetimeFormatter" label="修改时间" prop="modified_at" width="160" />
+                <el-table-column fixed="right" label="操作" width="240">
+                    <template #default="scope">
+                        <el-popconfirm cancelButtonText='取消' confirmButtonText='删除' icon="el-icon-info" iconColor="red"
+                        title="确定删除该文章吗？" @confirm="deleteArticle(scope.$index,scope.row)">
+                            <template #reference>
+                                <el-button :icon="deleteIcon" size="small" type="text">
+                                    删除
+                                </el-button>
+                            </template>
+                        </el-popconfirm>
+
+                        <el-button :icon="edit" size="small" type="text" @click.prevent="showEditDrawer(scope.$index, scope.row)">
+                            编辑
+                        </el-button>
+                        <el-button :icon="successFilled" v-if="scope.row.status==='Draft'" size="small" type="text"
+                                    @click.prevent="publishArticle(scope.$index,scope.row)">
+                            发布
+                        </el-button>
+                        <el-button :icon="removeFilled" v-else size="small" type="text"
+                                       @click.prevent="offlineArticle(scope.$index, scope.row)">
+                            下线
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <div class="pagination">
+            <el-pagination 
+              v-model:pageSize="state.params.page_size" 
+              v-model:currentPage="state.params.page"
+              :page-sizes="state.page_sizes"
+              :total="state.total" 
+              background
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            >             
+            </el-pagination>
         </div>
     </div>
+  <EditArticle
+      :article-id="state.articleId"
+      :visible="state.showDrawer"
+      @close="handleCloseDrawer"
+  />
+  <CatalogTree
+      :visible="state.showCatalogTree"
+      @close="state.showCatalogTree=false"
+  />
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from 'vue';
-import { useRoute } from "vue-router";
-import { HomeFilled, Document, Flag, Comment, User, ChatDotRound } from '@element-plus/icons-vue';
+import { defineComponent, reactive, ref, computed, shallowRef } from "vue";
+import { Article, ArticleArray, ArticleParams } from "../../types";
+import { remoteSaveArticle, getArticleList } from "../../api/service";
+import { timestampToTime } from "../../utils";
+import { ElMessage } from "element-plus";
+import EditArticle from "../../components/EditArticle.vue";
+import CatalogTree from "../../components/CatalogTree.vue";
+import { Plus, Expand, Edit, SuccessFilled, RemoveFilled, Delete, Search } from '@element-plus/icons-vue';
+
 export default defineComponent({
-    name: 'Admin',
-    components: {
-        HomeFilled, Document, Flag, Comment, User, ChatDotRound
+    name: "ArticleAdmin",
+    components: { CatalogTree, EditArticle,
+        Plus, Expand, Edit, SuccessFilled, RemoveFilled, Delete, Search
     },
 
-    data(){
-        return {
-            HomeFilled, Document, Flag, Comment, User
-        }
-    },
+    setup:function() {
+        const plus = shallowRef(Plus);
+        const expand = shallowRef(Expand);
+        const edit = shallowRef(Edit);
+        const successFilled = shallowRef(SuccessFilled);
+        const removeFilled = shallowRef(RemoveFilled);
+        const deleteIcon = shallowRef(Delete);
+        const searchIcon = shallowRef(Search);
+      	const statusDict = {
+      	    Draft: '草稿',
+      	    Published: '已发布',
+      	    Deleted:'已删除',
+      	}
     
-    setup() {
         const state = reactive({
-            activePath: '' as string | null | undefined,
+            articleList: [] as Array<Article>,
+            params: {
+                search: undefined,
+                status: undefined,
+                page: 1,
+                page_size: 10,
+            } as unknown as ArticleParams,
+            page_sizes:[5,10,15,20,30,40,50,100],
+            isLoading: false,
+            total: 0,
+            showDrawer: false,
+            articleId: 0,
+            showCatalogTree: false,
         });
-        const route: any = useRoute();
-        if (route.name == "Dashboard") {
-            state.activePath = "AdminDashboard";
-        } else {
-            state.activePath = route.name as string;
+
+        const handleSearch = () => {
+            state.params.page = 1;
+            state.params.page_size = 10;
+            doSearch();
+        }
+        
+        const doSearch = async (): Promise<void> => {
+          state.isLoading = true;
+          try {
+            const data: any = await getArticleList(state.params);
+            state.isLoading = false;
+            state.articleList = data.data.results;
+            state.total = data.data.count;
+          } catch (e) {
+            console.error(e);
+            state.isLoading = false;
+          }
+        };
+
+        const publishArticle = async (index: number, row: Article) => {
+          try {
+            await remoteSaveArticle('patch', {id: row.id, status: "Published"} as Article);
+            ElMessage({
+              message: "发布成功！",
+              type: "success",
+            });
+            handleSearch();
+          } catch (e) {
+            console.error(e);
+          }
         }
 
-        return {
-            state,
+        const offlineArticle = async (index: number, row: Article) => {
+          try {
+            await remoteSaveArticle('patch', {id: row.id, status: "Draft"}  as Article);
+            ElMessage({
+              message: "下线成功！",
+              type: "success",
+            });
+            handleSearch();
+          } catch (e) {
+            console.error(e);
+          }
         }
+
+        const deleteArticle = async (index: number, row: Article) => {
+          await remoteSaveArticle('patch', {id: row.id, status: "Deleted"} as Article);
+          ElMessage({
+            message: "删除成功！",
+            type: "success",
+          });
+          handleSearch();
+        }
+
+        const datetimeFormatter = (row: Article, column: number, cellValue: string, index: number) => {
+          return timestampToTime(cellValue, true);
+        }
+
+        handleSearch();
+
+        const handleCloseDrawer = (isOk: boolean) => {
+          state.showDrawer = false;
+          if (isOk) {
+            handleSearch();
+          }
+        }
+
+        const handleSizeChange = (val: number) => {
+          state.params.page_size = val;
+          doSearch();
+        }
+
+        const handleCurrentChange = (val: number) => {
+          state.params.page = val;
+          doSearch();
+        }
+
+      return {
+          plus, expand, edit, successFilled, removeFilled, deleteIcon, searchIcon,
+          statusDict,
+          state,
+          doSearch,
+          handleSearch,
+          datetimeFormatter,
+          deleteArticle,
+          handleCloseDrawer,
+          publishArticle,
+          offlineArticle,
+          handleSizeChange,
+          handleCurrentChange,
+      }
+  },
+
+  mounted() {
+    this.$refs.title.focus();
+  },
+
+  methods: {
+    showEditDrawer(index: number, row: Article) {
+      this.$refs.articleTable.setCurrentRow(row);
+      this.state.showDrawer = true;
+      this.state.articleId = row.id;
     },
+    showAddDrawer() {
+      this.state.showDrawer = true;
+      this.state.articleId = 0;
+    }
+  }
 })
 </script>
 
-<style lang="less" scoped>
-.body {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  display: flex;
+<style scoped>
+.pagination {
+  text-align: right;
+  margin-top: 12px;
 }
-
-.user {
-  font-size: 20px;
-}
-
-.menu {
-  width: 200px;
-}
-
-.view {
-  width: calc(100% - 200px);
-  padding: 24px;
-}
-
-.el-menu {
-  height: 100%;
-}
-
 </style>
