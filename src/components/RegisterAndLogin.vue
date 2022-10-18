@@ -113,7 +113,7 @@
             >
                 <el-input
                     v-model="state.loginForm.email"
-                    placeholder="邮箱"
+                    placeholder="邮箱.用于接收注册验证码，修改密码等。"
                     autocomplete="off"
                     tabindex="5"
                     type="text"
@@ -461,6 +461,7 @@ export default defineComponent({
                         }
                     } else {
                         try {
+		            let data = null;
                             const req = {
                                 username: this.state.loginForm.username,
                                 password: this.state.loginForm.password,
@@ -470,12 +471,18 @@ export default defineComponent({
                                 desc:     this.state.loginForm.desc
                             };
 
-                            await register(req);
+                            data = await register(req);
                             this.$refs.loginForm.resetFields();
-                            this.$message({
+                            /*
+			    this.$message({
                                 message: "注册成功!",
                                 type: "success",
                                 duration: 3* 1000,
+                            }); */  
+			    this.$message({
+                                message: data.data.detail,
+                                type: "success",
+                                duration: 10 * 1000,
                             });  
                             this.cancel();  
                         } catch (e) {
